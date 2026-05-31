@@ -95,6 +95,16 @@ describe('ServiceTable', () => {
     )
   })
 
+  it('links each service name to its edit page (/services/{id}/edit)', () => {
+    render(<ServiceTable services={services} onDelete={onDelete} />)
+    expect(
+      screen.getByRole('link', { name: 'Example API' }),
+    ).toHaveAttribute('href', '/services/1/edit')
+    expect(
+      screen.getByRole('link', { name: 'Second Service' }),
+    ).toHaveAttribute('href', '/services/2/edit')
+  })
+
   it('confirm delete calls onDelete(id) exactly once with the row id', async () => {
     const user = userEvent.setup()
     render(<ServiceTable services={services} onDelete={onDelete} />)

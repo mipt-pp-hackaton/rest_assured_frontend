@@ -20,6 +20,8 @@ export default function ServicesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteService(id),
+    // Previously a failed delete was silent; the global toast now reports it.
+    meta: { errorMessage: 'Could not delete the service.' },
     onSuccess: () => {
       // Refetch the list so the deleted row disappears.
       return queryClient.invalidateQueries({ queryKey: ['services'] })

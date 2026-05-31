@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { createService } from '../api/servicesApi'
 import { ApiError } from '../api/errors'
 import {
@@ -23,6 +23,9 @@ export default function ServiceCreatePage() {
 
   const mutation = useMutation({
     mutationFn: (body: ServiceCreate) => createService(body),
+    // Non-422 failures (e.g. 500) surface via the global toast with this copy;
+    // 422s additionally map onto the form fields below.
+    meta: { errorMessage: 'Could not create the service.' },
     onSuccess: () => {
       navigate('/services')
     },
@@ -39,13 +42,22 @@ export default function ServiceCreatePage() {
   }
 
   return (
-    <div data-testid="service-create-page">
-      <ServiceForm
-        mode="create"
-        onSubmit={handleSubmit}
-        errors={serverErrors}
-        submitLabel="Create"
-      />
+    <div data-testid="service-create-page" className="page page--narrow">
+      <header className="page__header">
+        <Link to="/services" className="back-link">
+          ← Services
+        </Link>
+        <h1>New service</h1>
+        <p className="page__subtitle">Add an endpoint to monitor.</p>
+      </header>
+      <div className="panel">
+        <ServiceForm
+          mode="create"
+          onSubmit={handleSubmit}
+          errors={serverErrors}
+          submitLabel="Create"
+        />
+      </div>
     </div>
   )
 }

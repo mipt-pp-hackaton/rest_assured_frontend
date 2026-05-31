@@ -22,6 +22,7 @@ export interface ServiceFormValues {
   interval_ms: number
   expected_status?: number | null
   is_active: boolean
+  owner_emails?: string[]
 }
 
 /**
@@ -43,6 +44,7 @@ export interface ServiceFormErrors {
   interval_ms?: string
   expected_status?: string
   is_active?: string
+  owner_emails?: string
 }
 
 export interface ServiceFormProps {
@@ -101,6 +103,24 @@ function parseExpectedStatus(raw: string): number | null {
   return Number.isNaN(n) ? null : n
 }
 
+// Pragmatic email shape check, matching the auth forms.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// owner_emails is entered as free text; split on commas/whitespace and drop
+// blanks so "a@x.com, b@y.com\n" -> ["a@x.com", "b@y.com"].
+function parseEmails(raw: string): string[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter((s) => s !== '')
+}
+
+// Compare two email arrays by value (order-sensitive) so an unchanged list does
+// not show up in the edit diff (which compares against initialValues).
+function emailsEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i])
+}
+
 export function ServiceForm({
   mode,
   initialValues,
@@ -123,6 +143,9 @@ export function ServiceForm({
       : String(initialValues.expected_status),
   )
   const [isActive, setIsActive] = useState(initialValues?.is_active ?? true)
+  const [ownerEmailsText, setOwnerEmailsText] = useState(
+    (initialValues?.owner_emails ?? []).join(', '),
+  )
 
   const [clientErrors, setClientErrors] = useState<ServiceFormErrors>({})
 
@@ -136,6 +159,10 @@ export function ServiceForm({
     } else if (!isValidHttpUrl(url.trim())) {
       next.url = 'URL must be a valid http(s) URL'
     }
+    const invalid = parseEmails(ownerEmailsText).filter((e) => !EMAIL_RE.test(e))
+    if (invalid.length > 0) {
+      next.owner_emails = `Not a valid email: ${invalid.join(', ')}`
+    }
     return next
   }
 
@@ -147,6 +174,7 @@ export function ServiceForm({
       http_method: httpMethod,
       interval_ms: Number(intervalMs),
       is_active: isActive,
+      owner_emails: parseEmails(ownerEmailsText),
     }
     if (es !== null) {
       values.expected_status = es
@@ -182,6 +210,10 @@ export function ServiceForm({
     if (isActive !== (init.is_active ?? true)) {
       diff.is_active = isActive
     }
+    const ownerEmails = parseEmails(ownerEmailsText)
+    if (!emailsEqual(ownerEmails, init.owner_emails ?? [])) {
+      diff.owner_emails = ownerEmails
+    }
     return diff
   }
 
@@ -204,7 +236,7 @@ export function ServiceForm({
     errors?.[field] ?? clientErrors[field]
 
   return (
-    <form onSubmit={handleSubmit} noValidate data-testid="service-form">
+    <form onSubmit={handleSubmit} noValidate className="form" data-testid="service-form">
       <div>
         <label htmlFor="service-name">Name</label>
         <input
@@ -316,7 +348,29 @@ export function ServiceForm({
         )}
       </div>
 
-      <button type="submit" data-testid="service-submit">
+      <div>
+        <label htmlFor="service-owner-emails">Owner emails</label>
+        <textarea
+          id="service-owner-emails"
+          name="owner_emails"
+          rows={2}
+          value={ownerEmailsText}
+          onChange={(e) => setOwnerEmailsText(e.target.value)}
+          placeholder="alice@example.com, bob@example.com"
+          aria-invalid={fieldError('owner_emails') ? true : undefined}
+          data-testid="service-owner-emails"
+        />
+        <p className="field-hint">
+          Comma- or space-separated. Notified about this service’s incidents.
+        </p>
+        {fieldError('owner_emails') && (
+          <p role="alert" data-testid="service-owner-emails-error">
+            {fieldError('owner_emails')}
+          </p>
+        )}
+      </div>
+
+      <button type="submit" className="btn btn--primary" data-testid="service-submit">
         {submitLabel ?? (mode === 'edit' ? 'Save' : 'Create')}
       </button>
     </form>

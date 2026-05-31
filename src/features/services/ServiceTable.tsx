@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { ServiceRead } from '../../api/types'
 
 /**
@@ -23,7 +24,13 @@ export function ServiceTable({ services, onDelete }: ServiceTableProps) {
         const confirming = confirmingId === service.id
         return (
           <li key={service.id} data-testid={`service-row-${service.id}`}>
-            <span className="row__name">{service.name}</span>
+            <Link
+              to={`/services/${service.id}/edit`}
+              className="row__name row__name--link"
+              title={`Edit ${service.name}`}
+            >
+              {service.name}
+            </Link>
             <span className="row__url">{service.url}</span>
             <span className="row__meta">{service.http_method}</span>
             <span className="row__meta">{service.interval_ms} ms</span>

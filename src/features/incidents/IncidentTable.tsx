@@ -8,36 +8,57 @@ interface IncidentTableProps {
 const DASH = '—'
 
 function IncidentRow({ incident }: { incident: IncidentRead }) {
+  const status = incidentStatus(incident)
   return (
-    <li data-testid={`incident-row-${incident.id}`}>
-      <div data-testid="incident-row">
-        <span>{incident.service_name}</span>
-        <span>{formatDateTime(incident.opened_at)}</span>
-        <span>
-          {incident.closed_at === null
-            ? DASH
-            : formatDateTime(incident.closed_at)}
+    <tr data-testid={`incident-row-${incident.id}`}>
+      {/* Row header doubles as the per-row count hook (data-testid incident-row). */}
+      <th scope="row" data-testid="incident-row">
+        {incident.service_name}
+      </th>
+      <td className="table__num">{formatDateTime(incident.opened_at)}</td>
+      <td className="table__num">
+        {incident.closed_at === null ? DASH : formatDateTime(incident.closed_at)}
+      </td>
+      <td>
+        <span className="cell-badges">
+          <span className={`badge ${status === 'open' ? 'badge--down' : 'badge--up'}`}>
+            {status}
+          </span>
+          {incident.sla_breach === true ? (
+            <span className="badge badge--down" data-testid="incident-sla-badge">
+              SLA breach
+            </span>
+          ) : null}
         </span>
-        <span>{incidentStatus(incident)}</span>
-        {incident.sla_breach === true ? (
-          <span data-testid="incident-sla-badge">SLA breach</span>
-        ) : null}
-        <span>
-          {incident.duration_seconds === null
-            ? DASH
-            : formatUptime(incident.duration_seconds)}
-        </span>
-      </div>
-    </li>
+      </td>
+      <td className="table__num">
+        {incident.duration_seconds === null
+          ? DASH
+          : formatUptime(incident.duration_seconds)}
+      </td>
+    </tr>
   )
 }
 
 export default function IncidentTable({ incidents }: IncidentTableProps) {
   return (
-    <ul>
-      {incidents.map((incident) => (
-        <IncidentRow key={incident.id} incident={incident} />
-      ))}
-    </ul>
+    <div className="table-wrap">
+      <table className="table">
+        <thead>
+          <tr>
+            <th scope="col">Service</th>
+            <th scope="col">Opened</th>
+            <th scope="col">Closed</th>
+            <th scope="col">Status</th>
+            <th scope="col">Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          {incidents.map((incident) => (
+            <IncidentRow key={incident.id} incident={incident} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

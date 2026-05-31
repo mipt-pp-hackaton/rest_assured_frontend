@@ -72,4 +72,12 @@ describe('SummaryCard', () => {
     expect(status).toBeInTheDocument()
     expect(status).toHaveTextContent(/unknown/i)
   })
+
+  // The whole card is a link that drills into the service's metrics + chart
+  // page (GET /api/services/{id}/timeseries lives there).
+  it('links the card to the service detail/chart page at /services/{id}', () => {
+    render(<SummaryCard item={upItem} />)
+    const link = screen.getByRole('link', { name: /API Gateway/i })
+    expect(link).toHaveAttribute('href', '/services/1')
+  })
 })

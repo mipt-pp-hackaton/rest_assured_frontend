@@ -55,27 +55,27 @@ export default function IncidentFilters({
   }
 
   return (
-    <div>
-      <label>
-        Open only
+    <div className="filters">
+      <label className="filter-check">
         <input
           type="checkbox"
           data-testid="incident-filter-open"
           checked={value.open ?? false}
           onChange={(e) => onChange({ ...value, open: e.target.checked })}
         />
+        <span>Open only</span>
       </label>
-      <label>
-        SLA breach only
+      <label className="filter-check">
         <input
           type="checkbox"
           data-testid="incident-filter-sla-breach"
           checked={value.slaBreach ?? false}
           onChange={(e) => onChange({ ...value, slaBreach: e.target.checked })}
         />
+        <span>SLA breach only</span>
       </label>
-      <label>
-        Service ID
+      <label className="filter-field">
+        <span>Service ID</span>
         <input
           type="number"
           data-testid="incident-filter-service-id"
@@ -86,8 +86,8 @@ export default function IncidentFilters({
           }}
         />
       </label>
-      <label>
-        Limit
+      <label className="filter-field">
+        <span>Limit</span>
         <input
           type="number"
           data-testid="incident-filter-limit"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getServiceMetrics, getTimeseries } from '../api/metricsApi'
 import MetricsPanel from '../features/services/MetricsPanel'
@@ -55,8 +55,27 @@ export default function ServiceDetailPage() {
   })
 
   return (
-    <div data-testid="service-detail-page">
-      <section>
+    <div data-testid="service-detail-page" className="page">
+      <header className="page__header page__header--actions">
+        <div>
+          <Link to="/" className="back-link" data-testid="detail-back-link">
+            ← Dashboard
+          </Link>
+          <h1>Service metrics</h1>
+          <p className="page__subtitle">Uptime, SLA and latency over time.</p>
+        </div>
+        {Number.isInteger(serviceId) && serviceId > 0 ? (
+          <Link
+            to={`/services/${serviceId}/edit`}
+            className="btn btn--ghost"
+            data-testid="detail-edit-link"
+          >
+            Edit service
+          </Link>
+        ) : null}
+      </header>
+
+      <section className="panel section">
         <QueryStates
           testIdPrefix="metrics"
           isPending={metricsQuery.isPending}
@@ -72,37 +91,39 @@ export default function ServiceDetailPage() {
         </QueryStates>
       </section>
 
-      <section>
-        <label>
-          Range
-          <select
-            data-testid="range-select"
-            value={range}
-            onChange={(e) => {
-              setRange(e.target.value as RangePreset)
-              // Switching presets returns to that preset's default bucket.
-              setBucketOverride(null)
-            }}
-          >
-            <option value="1h">Last hour</option>
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-          </select>
-        </label>
-        <label>
-          Bucket
-          <select
-            data-testid="bucket-select"
-            value={String(bucketSeconds)}
-            onChange={(e) => setBucketOverride(Number(e.target.value))}
-          >
-            {BUCKET_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}s
-              </option>
-            ))}
-          </select>
-        </label>
+      <section className="panel">
+        <div className="toolbar">
+          <label className="control">
+            Range
+            <select
+              data-testid="range-select"
+              value={range}
+              onChange={(e) => {
+                setRange(e.target.value as RangePreset)
+                // Switching presets returns to that preset's default bucket.
+                setBucketOverride(null)
+              }}
+            >
+              <option value="1h">Last hour</option>
+              <option value="24h">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+            </select>
+          </label>
+          <label className="control">
+            Bucket
+            <select
+              data-testid="bucket-select"
+              value={String(bucketSeconds)}
+              onChange={(e) => setBucketOverride(Number(e.target.value))}
+            >
+              {BUCKET_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}s
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <QueryStates
           testIdPrefix="timeseries"

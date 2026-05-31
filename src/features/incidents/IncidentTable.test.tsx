@@ -64,6 +64,16 @@ describe('IncidentTable', () => {
     expect(screen.getByTestId('incident-row-2')).toBeInTheDocument()
   })
 
+  it('renders an accessible table with labelled column headers', () => {
+    render(<IncidentTable incidents={[openWithBreach, resolvedNoBreach]} />)
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    for (const name of ['Service', 'Opened', 'Closed', 'Status', 'Duration']) {
+      expect(screen.getByRole('columnheader', { name })).toBeInTheDocument()
+    }
+    // One body row per incident.
+    expect(screen.getAllByRole('row')).toHaveLength(3) // header + 2 incidents
+  })
+
   it('renders the open + SLA-breached row: name, opened time, closed "—", status "open", SLA badge, duration "—"', () => {
     render(<IncidentTable incidents={[openWithBreach, resolvedNoBreach]} />)
     const row = within(screen.getByTestId('incident-row-1'))

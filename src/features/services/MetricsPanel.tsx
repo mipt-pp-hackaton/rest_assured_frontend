@@ -12,16 +12,18 @@ export interface MetricsPanelProps {
  */
 export default function MetricsPanel({ metrics }: MetricsPanelProps) {
   return (
-    <div data-testid="metrics-panel">
-      <div>
-        <span>Uptime</span>
-        <span data-testid="metrics-uptime">
+    <div data-testid="metrics-panel" className="stat-row">
+      <div className="stat">
+        <span className="stat__label">Uptime</span>
+        <span className="stat__value" data-testid="metrics-uptime">
           {formatUptime(metrics.current_uptime_seconds)}
         </span>
       </div>
-      <div>
-        <span>SLA</span>
-        <span data-testid="metrics-sla">{formatSlaPct(metrics.sla_pct)}</span>
+      <div className="stat">
+        <span className="stat__label">SLA</span>
+        <span className="stat__value" data-testid="metrics-sla">
+          {formatSlaPct(metrics.sla_pct)}
+        </span>
       </div>
     </div>
   )

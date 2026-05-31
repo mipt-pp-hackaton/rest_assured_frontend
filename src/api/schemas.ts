@@ -47,6 +47,8 @@ export const ServiceCreateSchema = z.object({
   interval_ms: z.number().int().min(1000).default(60000),
   expected_status: z.number().int().nullable().optional(),
   is_active: z.boolean().default(true),
+  // Emails notified about this service's incidents. Optional; defaults to [].
+  owner_emails: z.array(z.email()).optional(),
 })
 
 export const ServiceUpdateSchema = z.object({
@@ -56,6 +58,7 @@ export const ServiceUpdateSchema = z.object({
   interval_ms: z.number().int().min(1000).nullable().optional(),
   expected_status: z.number().int().nullable().optional(),
   is_active: z.boolean().nullable().optional(),
+  owner_emails: z.array(z.email()).nullable().optional(),
 })
 
 export const ServiceReadSchema = z.object({
@@ -67,6 +70,8 @@ export const ServiceReadSchema = z.object({
   expected_status: z.number().int().nullable().optional(),
   is_active: z.boolean(),
   created_at: z.string(),
+  // Lenient on read (don't reject a non-email the server might return).
+  owner_emails: z.array(z.string()).optional(),
 })
 
 export const ServiceSummaryItemSchema = z.object({

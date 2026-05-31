@@ -224,6 +224,70 @@ describe('ServiceForm', () => {
     expect(onSubmit.mock.calls[0][0]).toEqual({ name: 'Renamed' })
   })
 
+  it('create submit includes the parsed owner_emails array', async () => {
+    const user = userEvent.setup()
+    render(<ServiceForm mode="create" onSubmit={onSubmit} />)
+
+    await user.type(screen.getByLabelText(/name/i), 'Svc')
+    await user.type(screen.getByLabelText(/url/i), 'https://example.com')
+    await user.type(
+      screen.getByLabelText(/owner emails/i),
+      'alice@example.com, bob@example.com',
+    )
+    await user.click(screen.getByTestId('service-submit'))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit.mock.calls[0][0].owner_emails).toEqual([
+      'alice@example.com',
+      'bob@example.com',
+    ])
+  })
+
+  it('blocks submit when an owner email is invalid', async () => {
+    const user = userEvent.setup()
+    render(<ServiceForm mode="create" onSubmit={onSubmit} />)
+
+    await user.type(screen.getByLabelText(/name/i), 'Svc')
+    await user.type(screen.getByLabelText(/url/i), 'https://example.com')
+    await user.type(screen.getByLabelText(/owner emails/i), 'not-an-email')
+    await user.click(screen.getByTestId('service-submit'))
+
+    expect(
+      await screen.findByTestId('service-owner-emails-error'),
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('edit mode pre-populates owner_emails and diffs it when changed', async () => {
+    const user = userEvent.setup()
+    render(
+      <ServiceForm
+        mode="edit"
+        onSubmit={onSubmit}
+        initialValues={{
+          name: 'X',
+          url: 'https://x.test',
+          http_method: 'GET',
+          interval_ms: 60000,
+          is_active: true,
+          owner_emails: ['old@example.com'],
+        }}
+      />,
+    )
+
+    const field = screen.getByLabelText(/owner emails/i) as HTMLTextAreaElement
+    expect(field.value).toContain('old@example.com')
+
+    await user.clear(field)
+    await user.type(field, 'new@example.com')
+    await user.click(screen.getByTestId('service-submit'))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit.mock.calls[0][0]).toEqual({
+      owner_emails: ['new@example.com'],
+    })
+  })
+
   it('renders server-side field errors passed via the errors prop', () => {
     render(
       <ServiceForm

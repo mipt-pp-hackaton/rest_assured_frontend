@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Routes, Route, MemoryRouter } from 'react-router-dom'
+import { Routes, Route, MemoryRouter, Link } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '../test/server'
 import { tokenStorage } from '../auth/tokenStorage'
@@ -171,6 +171,54 @@ describe('ServiceEditPage', () => {
     expect(patchBody).not.toBeNull()
     // ONLY the changed key is present in the PATCH body.
     expect(patchBody!).toEqual({ name: 'Renamed Service' })
+  })
+
+  it('shows the saved value when returning to edit (no stale cache between visits)', async () => {
+    const user = userEvent.setup()
+    // The "server" holds mutable state so a refetch reflects the saved value.
+    let current: ServiceRead = { ...existing }
+    server.use(
+      http.get(url('/api/services/:id'), () => HttpResponse.json(current)),
+      http.patch(url('/api/services/:id'), async ({ request }) => {
+        const patch = (await request.json()) as Partial<ServiceRead>
+        current = { ...current, ...patch }
+        return HttpResponse.json(current)
+      }),
+    )
+
+    // ONE QueryClient shared across navigations (mirrors the real app, where the
+    // cache outlives client-side route changes).
+    render(
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter initialEntries={['/services/5/edit']}>
+          <Routes>
+            <Route path="/services/:id/edit" element={<ServiceEditPage />} />
+            <Route
+              path="/services/:id"
+              element={<Link to="/services/5/edit" data-testid="back-to-edit">back</Link>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const name = await screen.findByLabelText(/name/i)
+    await waitFor(() =>
+      expect((name as HTMLInputElement).value).toBe('Existing Service'),
+    )
+    await user.clear(name)
+    await user.type(name, 'Renamed Service')
+    await user.click(screen.getByTestId('service-submit'))
+
+    // Navigated to the detail route; now go back to the edit form.
+    await user.click(await screen.findByTestId('back-to-edit'))
+
+    // The form must show the value saved on the first visit — NOT the stale
+    // pre-edit value. (Before the fix this stayed 'Existing Service'.)
+    const nameAgain = await screen.findByLabelText(/name/i)
+    await waitFor(() =>
+      expect((nameAgain as HTMLInputElement).value).toBe('Renamed Service'),
+    )
   })
 
   it('maps a 422 on PATCH to the right field error and does NOT navigate', async () => {
