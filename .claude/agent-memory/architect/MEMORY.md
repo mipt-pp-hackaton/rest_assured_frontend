@@ -6,3 +6,4 @@
 - [request T|undefined cast](request-undefined-cast.md) — httpClient request<T> returns T|undefined; authApi casts `as T` which is safe only for required-body endpoints.
 - [Form/page split pattern](form-page-split-pattern.md) — presentational ServiceForm + page-owned mutation + shared serviceFormErrors 422->field mapper; edit mode diffs to changed keys.
 - [QueryStates ladder pattern](querystates-ladder-pattern.md) — shared loading/error+retry/empty/children wrapper; re-check isPending/isError before rendering children.
+- [Test API base URL](test-env-base-url.md) — VITE_API_BASE_URL must be a committed absolute http URL in vite.config test.env, scoped to test only; .env.test alone is not the contract.

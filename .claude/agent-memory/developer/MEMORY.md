@@ -14,3 +14,4 @@
 - [test-utils double-router pitfall](pitfall-test-utils-double-router.md) — test-utils render wraps in MemoryRouter; a page test bringing its own router throws "Router inside Router"; QA-side defect
 - [Controlled inputs vs non-updating test parents](pitfall-controlled-input-test.md) — fully-controlled number inputs need a local string buffer to satisfy typing tests whose mock parent never re-renders
 - [QueryStates shared ladder](component-querystates.md) — loading/error/empty/children helper shared by the three list pages; retry control shape per page
+- [Test API base URL](test-env-base-url.md) — VITE_API_BASE_URL must be an absolute http URL committed in vite.config test.env, not only the gitignored .env.test
