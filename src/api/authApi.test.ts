@@ -144,4 +144,33 @@ describe('authApi.me()', () => {
     const result = await me()
     expect(result).toEqual(user)
   })
+
+  // Regression: me() is an authenticated endpoint, so it must route through
+  // authedRequest and attach the stored bearer token. Previously it used the
+  // bare `request` and sent no Authorization header, so the post-login /me call
+  // 401'd and the UI reported "Invalid credentials".
+  it('sends the stored bearer token in the Authorization header', async () => {
+    tokenStorage.setTokens({ access: 'acc-xyz', refresh: 'ref-xyz' })
+    let seenAuth: string | null = null
+    const user: UserRead = {
+      id: 7,
+      email: 'me@example.com',
+      is_active: true,
+      is_superuser: true,
+      created_at: '2026-02-02T00:00:00Z',
+      updated_at: '2026-02-02T00:00:00Z',
+    }
+
+    server.use(
+      http.get(url('/api/auth/me'), ({ request: req }) => {
+        seenAuth = req.headers.get('Authorization')
+        return HttpResponse.json(user, { status: 200 })
+      })
+    )
+
+    const result = await me()
+
+    expect(seenAuth).toBe('Bearer acc-xyz')
+    expect(result).toEqual(user)
+  })
 })

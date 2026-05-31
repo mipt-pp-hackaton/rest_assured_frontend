@@ -97,8 +97,8 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate data-testid="register-form">
-      <div>
+    <form onSubmit={handleSubmit} noValidate className="form" data-testid="register-form">
+      <div className="form-field">
         <label htmlFor="register-email">Email</label>
         <input
           id="register-email"
@@ -111,13 +111,13 @@ export default function RegisterForm() {
           data-testid="register-email"
         />
         {errors.email && (
-          <p id="register-email-error" role="alert" data-testid="register-email-error">
+          <p id="register-email-error" role="alert" className="form-error" data-testid="register-email-error">
             {errors.email}
           </p>
         )}
       </div>
 
-      <div>
+      <div className="form-field">
         <label htmlFor="register-password">Password</label>
         <input
           id="register-password"
@@ -135,6 +135,7 @@ export default function RegisterForm() {
           <p
             id="register-password-error"
             role="alert"
+            className="form-error"
             data-testid="register-password-error"
           >
             {errors.password}
@@ -142,7 +143,7 @@ export default function RegisterForm() {
         )}
       </div>
 
-      <div>
+      <div className="form-field">
         <label htmlFor="register-confirm">Confirm Password</label>
         <input
           id="register-confirm"
@@ -160,6 +161,7 @@ export default function RegisterForm() {
           <p
             id="register-confirm-error"
             role="alert"
+            className="form-error"
             data-testid="register-confirm-error"
           >
             {errors.confirm}
@@ -168,12 +170,12 @@ export default function RegisterForm() {
       </div>
 
       {errors.global && (
-        <p role="alert" data-testid="register-error">
+        <p role="alert" className="alert alert--error" data-testid="register-error">
           {errors.global}
         </p>
       )}
 
-      <button type="submit" disabled={pending} data-testid="register-submit">
+      <button type="submit" className="btn btn--primary" disabled={pending} data-testid="register-submit">
         {pending ? 'Creating account…' : 'Create account'}
       </button>
     </form>

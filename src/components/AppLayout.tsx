@@ -3,9 +3,11 @@ import NavBar from './NavBar'
 
 export default function AppLayout() {
   return (
-    <>
+    <div className="app-shell">
       <NavBar />
-      <Outlet />
-    </>
+      <main className="app-main">
+        <Outlet />
+      </main>
+    </div>
   )
 }

@@ -79,6 +79,16 @@ function authenticate() {
   )
 }
 
+// Authenticate as a superuser (admin) for the admin-gated routes.
+function authenticateAdmin() {
+  tokenStorage.setTokens({ access: 'test-access', refresh: 'test-refresh' })
+  server.use(
+    http.get(`${API_BASE}/api/auth/me`, () =>
+      HttpResponse.json({ ...fakeUser, is_superuser: true }),
+    ),
+  )
+}
+
 describe('app router wiring', () => {
   beforeEach(() => {
     tokenStorage.clear()
@@ -125,6 +135,21 @@ describe('app router wiring', () => {
     authenticate()
     renderAt('/incidents')
     expect(await screen.findByTestId('incidents-page')).toBeInTheDocument()
+  })
+
+  // -- Admin-gated routes ---------------------------------------------------
+
+  it('routes "/users/new" to the create-user page for an admin', async () => {
+    authenticateAdmin()
+    renderAt('/users/new')
+    expect(await screen.findByTestId('create-user-page')).toBeInTheDocument()
+  })
+
+  it('redirects a non-admin away from "/users/new" to the dashboard', async () => {
+    authenticate() // fakeUser.is_superuser === false
+    renderAt('/users/new')
+    expect(await screen.findByTestId('dashboard-page')).toBeInTheDocument()
+    expect(screen.queryByTestId('create-user-page')).not.toBeInTheDocument()
   })
 
   // -- Gate behavior --------------------------------------------------------

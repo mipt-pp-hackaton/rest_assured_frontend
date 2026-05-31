@@ -1,10 +1,22 @@
-# docker-compose for the Rest Assured stack: the frontend SPA (built and
-# served by unprivileged nginx) plus the backend API image.
+# docker-compose for the Rest Assured stack:
+#   frontend  -> Vite SPA built and served by unprivileged nginx
+#   backend   -> prebuilt API image (migrates, seeds, then serves uvicorn)
+#   postgres  -> PostgreSQL database the backend connects to
+#   mailhog   -> SMTP sink for the backend's notification emails (+ web UI)
 #
-# Quick start:
-#   cp .env.example .env   # then fill in backend secrets in .env
+# Quick start (works out of the box with the local demo defaults):
 #   docker compose up --build
-#   open http://localhost:8080
+#   open http://localhost:8080         # SPA
+#   open http://localhost:8025         # MailHog UI (captured notification mail)
+#   # default login seeded by the backend: admin@admin.com / admin
+# Copy .env.example -> .env only if you want to change ports or the API base URL.
+#
+# Backend configuration:
+#   The backend image reads its config from a baked-in settings.toml. We bind-
+#   mount backend/settings.toml over it (see the `backend` service) so the DB
+#   host (`postgres`) and SMTP host (`mailhog`) resolve to the services below.
+#   The empty DATABASE_URL/SECRET_KEY/MAIL_* env vars that used to live here were
+#   never read by the image and have been removed in favour of that file.
 #
 # Networking model:
 #   The browser only ever talks to the frontend's nginx (host port 8080).
@@ -45,33 +57,92 @@ services:
       retries: 3
 
   # ---- Backend: prebuilt API image ----
-  # Exact config is not known to the frontend repo; the env block below is a
-  # documented placeholder. Fill values via .env (gitignored) — never hardcode
-  # secrets here. Unset optional vars are simply not passed to the container.
+  # Config comes from backend/settings.toml (bind-mounted below), which points
+  # the backend at the `postgres` and `mailhog` services on this network.
   backend:
     image: ghcr.io/mipt-pp-hackaton/rest_assured:latest
     restart: unless-stopped
-    # Backend listen port. Assumed 8000 to match nginx upstream (backend:8000).
-    # If the image listens elsewhere, change BACKEND_PORT *and* the upstream
-    # port in nginx/default.conf. No host port is published; access is via the
-    # frontend nginx /api proxy. Uncomment to expose for direct debugging:
+    # Override the image's default CMD to add seeding after migrations.
+    # Order: migrate -> seed -> exec uvicorn (server stays PID 1 for signals).
+    # `python3 -m rest_assured --seed` is idempotent: via the service layer
+    # (Auth/Catalog) it creates the superuser admin@admin.com / admin plus demo
+    # services; re-running on every restart creates no duplicates.
+    command:
+      - "sh"
+      - "-c"
+      - "pa-server migrate && python3 -m rest_assured --seed && exec uvicorn rest_assured.src.main:app --host 0.0.0.0 --port 8000"
+    # Wait until Postgres actually accepts connections before `pa-server migrate`
+    # runs — otherwise migrate fails fast on a refused/unresolved DB connection
+    # (the original "No address associated with hostname" was simply a missing
+    # `postgres` service). mailhog only needs to exist, not be healthy.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    volumes:
+      # Override the image's baked-in settings.toml. Path is image-specific
+      # (Python 3.13 site-packages); update it if the image's Python changes.
+      - ./backend/settings.toml:/usr/local/lib/python3.13/site-packages/settings.toml:ro
+    # Backend listen port. Assumed 8000 to match nginx upstream (backend:8000)
+    # and settings.toml [app_settings].port. No host port is published; access
+    # is via the frontend nginx /api proxy. Uncomment to expose for debugging:
     # ports:
     #   - "${BACKEND_HOST_PORT:-8000}:${BACKEND_PORT:-8000}"
     expose:
       - "${BACKEND_PORT:-8000}"
+    # python3 is guaranteed present in the image, so probe /health with it
+    # (no dependency on curl/wget). start_period is generous because the first
+    # boot runs migrate + seed before uvicorn begins listening.
+    healthcheck:
+      test:
+        - "CMD"
+        - "python3"
+        - "-c"
+        - "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ---- PostgreSQL: the backend's database ----
+  # Service name MUST be "postgres" to match db_settings.host in
+  # backend/settings.toml. The POSTGRES_* values below MUST match db_settings
+  # there (user / password / name). Not published to the host — only the
+  # backend reaches it over the compose network. Data persists in the `pgdata`
+  # volume across restarts (the seed step is idempotent, so this is safe).
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      # --- Placeholders — adjust to the backend's real config schema. ---
-      # Database connection string.
-      DATABASE_URL: ${DATABASE_URL-}
-      # JWT / app secret.
-      SECRET_KEY: ${SECRET_KEY-}
-      # SMTP / mail settings.
-      MAIL_HOST: ${MAIL_HOST-}
-      MAIL_PORT: ${MAIL_PORT-}
-      MAIL_USERNAME: ${MAIL_USERNAME-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD-}
-    # A healthcheck for the backend is intentionally omitted: the image's
-    # internal layout (curl/wget availability, health path) is unknown. Add one
-    # once confirmed, e.g.:
-    #   healthcheck:
-    #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: CHANGE_ME
+      POSTGRES_DB: test_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    # Uncomment to reach the DB directly from the host for debugging:
+    # ports:
+    #   - "5432:5432"
+    healthcheck:
+      # gate the backend's migrate step on a DB that truly accepts connections.
+      test: ["CMD-SHELL", "pg_isready -U user -d test_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+  # ---- MailHog: SMTP sink for backend notification emails ----
+  # Service name MUST be "mailhog" to match smtp.host in backend/settings.toml.
+  # Captures outbound mail instead of delivering it; view it in the web UI.
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    expose:
+      - "1025"   # SMTP — the backend connects here
+    ports:
+      - "${MAILHOG_WEB_PORT:-8025}:8025"   # web UI to inspect captured mail
+
+volumes:
+  pgdata:

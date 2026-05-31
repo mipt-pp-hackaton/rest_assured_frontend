@@ -17,6 +17,10 @@ export default function IncidentsPage() {
 
   return (
     <div data-testid="incidents-page">
+      <header className="page__header">
+        <h1>Incidents</h1>
+        <p className="page__subtitle">Downtime and SLA-breach events across your services.</p>
+      </header>
       <IncidentFilters value={filters} onChange={setFilters} />
       <QueryStates
         testIdPrefix="incidents"

@@ -30,9 +30,15 @@ export default function ServicesPage() {
 
   return (
     <div data-testid="services-page">
-      <Link to="/services/new" data-testid="services-new-link">
-        New service
-      </Link>
+      <header className="page__header page__header--actions">
+        <div>
+          <h1>Services</h1>
+          <p className="page__subtitle">Endpoints currently under monitoring.</p>
+        </div>
+        <Link to="/services/new" className="btn btn--primary" data-testid="services-new-link">
+          New service
+        </Link>
+      </header>
 
       <QueryStates
         testIdPrefix="services"

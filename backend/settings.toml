@@ -1,0 +1,57 @@
+# Backend (ghcr.io/mipt-pp-hackaton/rest_assured) runtime config.
+#
+# This file is bind-mounted by docker-compose.yml over the copy baked into the
+# image at /usr/local/lib/python3.13/site-packages/settings.toml, so the stack
+# can be configured from the frontend repo without rebuilding the backend image.
+#
+# It mirrors the image's shipped settings.toml with ONE deliberate change:
+#   use_testcontainers = false
+# In a docker-compose deployment the database is the long-lived `postgres`
+# service below — NOT an ephemeral testcontainer (which would also require a
+# Docker socket the backend container does not have).
+#
+# The hostnames here MUST match the compose service names:
+#   db_settings.host = "postgres"  -> the `postgres` service
+#   smtp.host        = "mailhog"   -> the `mailhog` service
+# The DB credentials here MUST match the POSTGRES_* env of the `postgres`
+# service in docker-compose.yml. The values below are local demo defaults
+# mirroring the image; CHANGE the DB password and the JWT secret (in BOTH this
+# file and the `postgres` service) before any non-local deployment.
+
+[app_settings]
+host = "0.0.0.0"
+port = 8000
+use_testcontainers = false
+
+[db_settings]
+name = "test_db"
+user = "user"
+password = "CHANGE_ME"
+host = "postgres"
+port = 5432
+
+[scheduler]
+poll_interval_seconds = 5
+default_timeout_ms = 5000
+
+[metrics]
+cache_ttl_seconds = 5
+
+[smtp]
+host = "mailhog"
+port = 1025
+user = ""
+password = ""
+use_tls = false
+from_email = "noreply@example.com"
+from_name = "Rest Assured Monitoring"
+
+[notifications]
+enabled = true
+reminder_cooldown_minutes = 30
+include_runbook_link = false
+
+[jwt]
+secret = "CHANGE_ME_JWT_SECRET"
+algorithm = "HS256"
+ttl_hours = 24

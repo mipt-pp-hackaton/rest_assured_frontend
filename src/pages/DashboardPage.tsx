@@ -11,6 +11,10 @@ export default function DashboardPage() {
 
   return (
     <div data-testid="dashboard-page">
+      <header className="page__header">
+        <h1>Services Overview</h1>
+        <p className="page__subtitle">Live SLA and uptime across your monitored services.</p>
+      </header>
       <QueryStates
         testIdPrefix="dashboard"
         isPending={query.isPending}
@@ -22,7 +26,7 @@ export default function DashboardPage() {
         emptyText="No services to display."
       >
         {!query.isPending && !query.isError ? (
-          <div>
+          <div className="card-grid">
             {query.data.map((item) => (
               <SummaryCard key={item.service_id} item={item} />
             ))}

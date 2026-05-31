@@ -8,20 +8,21 @@ interface SummaryCardProps {
 function StatusBadge({ isUp }: { isUp: boolean | null }) {
   if (isUp === true) {
     return (
-      <span data-testid="status-up" role="status" aria-label="Status: up">
+      <span className="badge badge--up" data-testid="status-up" role="status" aria-label="Status: up">
         Up
       </span>
     )
   }
   if (isUp === false) {
     return (
-      <span data-testid="status-down" role="status" aria-label="Status: down">
+      <span className="badge badge--down" data-testid="status-down" role="status" aria-label="Status: down">
         Down
       </span>
     )
   }
   return (
     <span
+      className="badge badge--unknown"
       data-testid="status-unknown"
       role="status"
       aria-label="Status: unknown"
@@ -34,17 +35,16 @@ function StatusBadge({ isUp }: { isUp: boolean | null }) {
 export default function SummaryCard({ item }: SummaryCardProps) {
   return (
     <div data-testid={`summary-card-${item.service_id}`}>
-      <div data-testid="summary-card">
-        <h3>{item.name}</h3>
+      <div data-testid="summary-card" className="card service-card">
+        <div className="service-card__head">
+          <h3>{item.name}</h3>
+          <StatusBadge isUp={item.last_check_is_up} />
+        </div>
         <dl>
           <dt>SLA</dt>
           <dd>{formatSlaPct(item.sla_pct)}</dd>
           <dt>Uptime</dt>
           <dd>{formatUptime(item.current_uptime_seconds)}</dd>
-          <dt>Status</dt>
-          <dd>
-            <StatusBadge isUp={item.last_check_is_up} />
-          </dd>
         </dl>
       </div>
     </div>

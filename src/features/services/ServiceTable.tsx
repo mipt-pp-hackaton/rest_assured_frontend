@@ -18,23 +18,29 @@ export function ServiceTable({ services, onDelete }: ServiceTableProps) {
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
 
   return (
-    <ul aria-label="Monitored services">
+    <ul className="data-list" aria-label="Monitored services">
       {services.map((service) => {
         const confirming = confirmingId === service.id
         return (
           <li key={service.id} data-testid={`service-row-${service.id}`}>
-            <span>{service.name}</span>
-            <span>{service.url}</span>
-            <span>{service.http_method}</span>
-            <span>{service.interval_ms} ms</span>
-            <span data-testid={`service-active-${service.id}`}>
+            <span className="row__name">{service.name}</span>
+            <span className="row__url">{service.url}</span>
+            <span className="row__meta">{service.http_method}</span>
+            <span className="row__meta">{service.interval_ms} ms</span>
+            <span
+              className={`badge ${service.is_active ? 'badge--up' : 'badge--unknown'}`}
+              data-testid={`service-active-${service.id}`}
+            >
               {service.is_active ? 'Active' : 'Inactive'}
             </span>
 
+            <span className="row__spacer" />
+
             {confirming ? (
-              <span>
+              <span className="row__actions">
                 <button
                   type="button"
+                  className="btn btn--danger btn--sm"
                   data-testid={`service-delete-confirm-${service.id}`}
                   aria-label={`Confirm delete ${service.name}`}
                   onClick={() => {
@@ -46,6 +52,7 @@ export function ServiceTable({ services, onDelete }: ServiceTableProps) {
                 </button>
                 <button
                   type="button"
+                  className="btn btn--ghost btn--sm"
                   data-testid={`service-delete-cancel-${service.id}`}
                   aria-label={`Cancel delete ${service.name}`}
                   onClick={() => setConfirmingId(null)}
@@ -56,6 +63,7 @@ export function ServiceTable({ services, onDelete }: ServiceTableProps) {
             ) : (
               <button
                 type="button"
+                className="btn btn--ghost btn--sm"
                 data-testid={`service-delete-${service.id}`}
                 aria-label={`Delete ${service.name}`}
                 onClick={() => setConfirmingId(service.id)}

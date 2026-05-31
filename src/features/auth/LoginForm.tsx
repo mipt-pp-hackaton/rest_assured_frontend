@@ -50,8 +50,8 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div>
+    <form onSubmit={handleSubmit} noValidate className="form">
+      <div className="form-field">
         <label htmlFor={emailId}>Email</label>
         <input
           id={emailId}
@@ -63,13 +63,13 @@ export function LoginForm() {
           aria-describedby={emailError ? `${emailId}-error` : undefined}
         />
         {emailError && (
-          <p id={`${emailId}-error`} role="alert" data-testid="login-email-error">
+          <p id={`${emailId}-error`} role="alert" className="form-error" data-testid="login-email-error">
             {emailError}
           </p>
         )}
       </div>
 
-      <div>
+      <div className="form-field">
         <label htmlFor={passwordId}>Password</label>
         <input
           id={passwordId}
@@ -84,6 +84,7 @@ export function LoginForm() {
           <p
             id={`${passwordId}-error`}
             role="alert"
+            className="form-error"
             data-testid="login-password-error"
           >
             {passwordError}
@@ -92,12 +93,12 @@ export function LoginForm() {
       </div>
 
       {formError && (
-        <p role="alert" data-testid="login-error">
+        <p role="alert" className="alert alert--error" data-testid="login-error">
           {formError}
         </p>
       )}
 
-      <button type="submit" data-testid="login-submit">
+      <button type="submit" className="btn btn--primary" data-testid="login-submit">
         Sign in
       </button>
     </form>
