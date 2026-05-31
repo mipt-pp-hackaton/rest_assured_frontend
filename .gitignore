@@ -22,10 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Project rules file (local only)
 CLAUDE.md
-
+.claude/*
 # Environment files
 .env
 .env.*

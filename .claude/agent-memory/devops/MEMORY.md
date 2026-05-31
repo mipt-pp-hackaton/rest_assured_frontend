@@ -1,1 +1,0 @@
-- [Infra conventions](infra_conventions.md) — container serves on 8080 (unprivileged nginx), nginx/default.conf COPYed in, backend:8000 upstream, build blocked by src tests
