@@ -1,0 +1,16 @@
+- [Test & Typecheck Setup](project_test_setup.md) — vitest + jsdom, how to run a single file, and why typecheck may show unrelated RED-phase errors
+- [Zod v4 + tsconfig conventions](zod-v4-conventions.md) — Zod v4 API (z.email top-level), schema/type split, verbatimModuleSyntax import-type rules
+- [Routing conventions](routing-conventions.md) — routes table in router.tsx, App wiring, src/pages/ components, data-testid markers, protected-route layout gate
+- [API layer conventions](api-layer.md) — how src/api modules (types, errors, httpClient) are structured and tested with MSW
+- [httpClient body & success-path conventions](httpclient-conventions.md) — Content-Type defaulting rules and safe 2xx body parsing in request()
+- [Auth API & interceptor](auth-api-interceptor.md) — authApi endpoint wrappers (urlencoded login) + authedRequest single-flight 401 refresh
+- [API CRUD module conventions](api-module-conventions.md) — PATCH partial-update payload building (only defined keys)
+- [React context file split](react-refresh-context-split.md) — context objects must live in a component-free module, not alongside the provider component
+- [Auth clear-on-failure pattern](auth-clear-on-failure.md) — token-storing flows must clear tokens + reset status on post-setTokens failure
+- [Auth form conventions](auth-form-conventions.md) — login/register form wiring: useAuth, ApiError 401 branch, field testid naming, validate-before-network
+- [Zod default fields: input vs output type](zod-default-input-output.md) — fields with `.default()` are required in `z.infer` but optional in `z.input`; use input type for omittable request payload keys
+- [Pages/Features structure](structure-pages-features.md) — list-page react-query lifecycle + presentational feature component split, mutually-exclusive state testids, two-step delete
+- [vi.fn() typecheck pitfall](pitfall-vifn-typecheck.md) — `let x: ReturnType<typeof vi.fn>` test props trip tsc -b even when runtime tests pass; not fixable from app code
+- [test-utils double-router pitfall](pitfall-test-utils-double-router.md) — test-utils render wraps in MemoryRouter; a page test bringing its own router throws "Router inside Router"; QA-side defect
+- [Controlled inputs vs non-updating test parents](pitfall-controlled-input-test.md) — fully-controlled number inputs need a local string buffer to satisfy typing tests whose mock parent never re-renders
+- [QueryStates shared ladder](component-querystates.md) — loading/error/empty/children helper shared by the three list pages; retry control shape per page

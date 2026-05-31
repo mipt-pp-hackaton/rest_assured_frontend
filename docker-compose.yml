@@ -1,0 +1,77 @@
+# docker-compose for the Rest Assured stack: the frontend SPA (built and
+# served by unprivileged nginx) plus the backend API image.
+#
+# Quick start:
+#   cp .env.example .env   # then fill in backend secrets in .env
+#   docker compose up --build
+#   open http://localhost:8080
+#
+# Networking model:
+#   The browser only ever talks to the frontend's nginx (host port 8080).
+#   nginx serves the static SPA and reverse-proxies /api/ and /health to the
+#   `backend` service over the internal compose network (see nginx/default.conf).
+#   Because of this proxy, the SPA uses *same-origin relative* API URLs, so the
+#   build-time VITE_API_BASE_URL is empty by default — the browser hits
+#   "/api/..." on its own origin and nginx forwards it to backend:8000.
+#   The backend therefore does NOT need a published host port.
+
+services:
+  # ---- Frontend: Vite SPA served by unprivileged nginx ----
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Empty => same-origin relative API URLs proxied by nginx (recommended).
+        # Override (e.g. in .env: FRONTEND_API_BASE_URL=https://api.example.com)
+        # only if you want the browser to bypass the nginx /api proxy and call
+        # the backend directly. Leave empty for the proxied setup above.
+        VITE_API_BASE_URL: ${FRONTEND_API_BASE_URL-}
+    image: rest_assured_frontend:latest
+    # nginx-unprivileged listens on container port 8080 (non-root cannot bind
+    # privileged ports). Published on host 8080 -> container 8080.
+    ports:
+      - "${FRONTEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      # Matches the Dockerfile HEALTHCHECK; wget is present in the alpine image.
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # ---- Backend: prebuilt API image ----
+  # Exact config is not known to the frontend repo; the env block below is a
+  # documented placeholder. Fill values via .env (gitignored) — never hardcode
+  # secrets here. Unset optional vars are simply not passed to the container.
+  backend:
+    image: ghcr.io/mipt-pp-hackaton/rest_assured:latest
+    restart: unless-stopped
+    # Backend listen port. Assumed 8000 to match nginx upstream (backend:8000).
+    # If the image listens elsewhere, change BACKEND_PORT *and* the upstream
+    # port in nginx/default.conf. No host port is published; access is via the
+    # frontend nginx /api proxy. Uncomment to expose for direct debugging:
+    # ports:
+    #   - "${BACKEND_HOST_PORT:-8000}:${BACKEND_PORT:-8000}"
+    expose:
+      - "${BACKEND_PORT:-8000}"
+    environment:
+      # --- Placeholders — adjust to the backend's real config schema. ---
+      # Database connection string.
+      DATABASE_URL: ${DATABASE_URL-}
+      # JWT / app secret.
+      SECRET_KEY: ${SECRET_KEY-}
+      # SMTP / mail settings.
+      MAIL_HOST: ${MAIL_HOST-}
+      MAIL_PORT: ${MAIL_PORT-}
+      MAIL_USERNAME: ${MAIL_USERNAME-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD-}
+    # A healthcheck for the backend is intentionally omitted: the image's
+    # internal layout (curl/wget availability, health path) is unknown. Add one
+    # once confirmed, e.g.:
+    #   healthcheck:
+    #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
