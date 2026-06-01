@@ -90,8 +90,8 @@ npm run dev        # Vite dev server
 Браузер общается только с nginx фронтенда (порт `8080`). nginx:
 
 - раздаёт собранный SPA с history-fallback на `index.html`;
-- проксирует на `backend:8000` запросы `/api/`, `/health` и документацию
-  (`/docs`, `/redoc`, `/openapi.json`).
+- проксирует на `backend:8000` запросы `/api/`, `/health`, Prometheus-метрики
+  (`/metrics`) и документацию (`/docs`, `/redoc`, `/openapi.json`).
 
 Поэтому SPA по умолчанию использует относительные same-origin URL
 (`VITE_API_BASE_URL` пустой при сборке в Docker). Документация бэкенда живёт в корне

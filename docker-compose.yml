@@ -20,8 +20,10 @@
 #
 # Networking model:
 #   The browser only ever talks to the frontend's nginx (host port 8080).
-#   nginx serves the static SPA and reverse-proxies /api/ and /health to the
-#   `backend` service over the internal compose network (see nginx/default.conf).
+#   nginx serves the static SPA and reverse-proxies /api/, /health, the
+#   Prometheus /metrics scrape endpoint, and the API docs (/docs, /redoc,
+#   /openapi.json) to the `backend` service over the internal compose network
+#   (see nginx/default.conf).
 #   Because of this proxy, the SPA uses *same-origin relative* API URLs, so the
 #   build-time VITE_API_BASE_URL is empty by default — the browser hits
 #   "/api/..." on its own origin and nginx forwards it to backend:8000.
